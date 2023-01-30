@@ -1,3 +1,8 @@
+# Data files
+*.csv
+*.xlsx
+*.pkl
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
