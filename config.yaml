@@ -1,0 +1,2 @@
+data_path: 'datasets/output_all_wide_502.csv'
+expert_labels_path: 'datasets/eeg PUH mater eeg file _deidentified.xlsx'

@@ -2,7 +2,36 @@ import numpy as np
 from sklearn import linear_model
 from scipy.stats import linregress
 from sklearn.neighbors import KDTree
+from yaml import load, dump
+from yaml import CLoader as Loader, CDumper as Dumper
+from pytz import timezone
 
+EASTERN = timezone('US/Eastern')
+
+def find_closest_expert_annotation(expert_labels, patient_id, timestamp):
+    """
+    A single patient might have multiple expert annotations. 
+    Given a timestamp and the ID of a patient, find the most 
+    relevant (and closest) expert annotation.
+    """
+    candidates = expert_labels.loc[expert_labels['id']==patient_id] # Candidates are all expert labels given to a particular patient (specified by patient ID)
+    
+    if len(candidates) == 0: # If no candidate expert labels
+        return np.nan, np.nan, np.nan
+    
+    ts = []
+    for r in candidates.index:
+        candidate_dt = EASTERN.localize(candidates.loc[r, 'Timestamp'])    
+        ts.append((candidate_dt - timestamp).total_seconds()) # Time differences of the candidates and this window's timestamp
+        
+    annotation = candidates.loc[candidates.index[np.argmin(ts)], 'Expert annotations']
+    min_duration = np.min(ts) # Time elapsed from the last time stamp
+    closest_annotation_duration = np.min(np.abs(ts)) # Time duration to the closest timestamp
+    
+    if min_duration > 3600: # If the expert label is not until one hour after the start of this 
+        annotation = None
+    
+    return annotation, min_duration, closest_annotation_duration 
 
 def fit_robust_line(T):
     # T is a time series
@@ -220,3 +249,21 @@ def sample_entropy(x, order=2, metric='chebyshev'):
     x = np.asarray(x, dtype=np.float64)
     phi = _app_samp_entropy(x, order=order, metric=metric, approximate=False)
     return -np.log(np.divide(phi[1], phi[0]))
+
+
+class Config:
+    def __init__(
+            self,
+            config_file_path='../config.yaml'):
+        """Class to read and parse the config.yml file
+		"""
+        self.config_file_path = config_file_path
+
+    def parse(self):
+        with open(self.config_file_path, 'rb') as f:
+            self.config = load(f, Loader=Loader)
+        return self.config
+
+    def save_config(self):
+        with open(self.config_file_path, 'w') as f:
+            dump(self.config, f)
