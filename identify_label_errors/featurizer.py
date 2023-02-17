@@ -7,7 +7,7 @@ import numpy as np
 from scipy.stats.mstats import winsorize
 from sklearn.mixture import GaussianMixture
 from scipy.signal import find_peaks
-from utils import fit_robust_line, sample_entropy, higuchi_fd
+from .utils import fit_robust_line, sample_entropy, higuchi_fd
 
 
 class Featurizer(object):

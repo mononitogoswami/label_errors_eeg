@@ -5,29 +5,21 @@
 
 import pandas as pd
 import numpy as np
-from utils import Config
 from collections import Counter
+from .utils import Config
 
-
-ABSTAIN = 'ABSTAIN'
-NORMAL = 'NORMAL'
-SUPPRESSED = 'SUPPRESSED'
-SUPPRESSED_WITH_ICTAL = 'SUPPRESSED_WITH_ICTAL'
-BURST_SUPRESSION = 'BURST_SUPRESSION'
-
-
-ARGS = Config(config_file_path=r'../config.yaml').parse()
+args = Config(config_file_path='config.yaml').parse()
 
 def load_data():
     # Load time-series data
-    data = pd.read_csv(ARGS.data_path) # Read data
+    data = pd.read_csv(args['data_path']) # Read data
     expert_labels = read_and_process_labels()
 
     return data, expert_labels
  
 def read_and_process_labels():
     # Read the expert labels
-    expert_labels = pd.read_excel(ARGS.expert_labels_path, sheet_name="Sheet1")
+    expert_labels = pd.read_excel(args['expert_labels_path'], sheet_name="Sheet1")
 
     # Drop all rows for which all columns are NaN
     expert_labels.dropna(axis='index', how='all', inplace=True)
@@ -80,14 +72,12 @@ def label_data_using_patterns(series):
     superimposed_patterns = int(series['Superimposed patterns'])
     
     if background == 1 and superimposed_patterns == 0: 
-        return SUPPRESSED
+        return args['label_values']['suppressed']
     elif background in [3, 4]:
-        return NORMAL
+        return args['label_values']['normal']
     elif background == 2 and superimposed_patterns not in [0, 6, 7]:
-        return SUPPRESSED_WITH_ICTAL
+        return args['label_values']['suppressed_with_ictal']
     elif background == 2 and superimposed_patterns in [6, 7]:
-        return BURST_SUPRESSION
+        return args['label_values']['burst_suppression']
     else:
         return None
-
-

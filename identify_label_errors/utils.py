@@ -8,6 +8,19 @@ from pytz import timezone
 
 EASTERN = timezone('US/Eastern')
 
+def fill_nans_with_zeros(data):
+    "Replace NaNs in data with zeros"
+    filled_nans = None # Indices where NaNs present
+
+    if sum(data.isna()) > 0:
+        filled_nans = data.isna().to_numpy()
+        data = data.fillna(0)
+
+    if filled_nans is None: 
+        filled_nans = np.zeros((21600,)).astype(bool)
+    
+    return data, filled_nans
+
 def find_closest_expert_annotation(expert_labels, patient_id, timestamp):
     """
     A single patient might have multiple expert annotations. 
