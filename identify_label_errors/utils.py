@@ -6,7 +6,7 @@ from yaml import load, dump
 from yaml import CLoader as Loader, CDumper as Dumper
 from pytz import timezone
 
-EASTERN = timezone('US/Eastern')
+eastern = timezone('US/Eastern')
 
 def fill_nans_with_zeros(data):
     "Replace NaNs in data with zeros"
@@ -34,7 +34,7 @@ def find_closest_expert_annotation(expert_labels, patient_id, timestamp):
     
     ts = []
     for r in candidates.index:
-        candidate_dt = EASTERN.localize(candidates.loc[r, 'Timestamp'])    
+        candidate_dt = eastern.localize(candidates.loc[r, 'Timestamp'])    
         ts.append((candidate_dt - timestamp).total_seconds()) # Time differences of the candidates and this window's timestamp
         
     annotation = candidates.loc[candidates.index[np.argmin(ts)], 'Expert annotations']
@@ -117,8 +117,8 @@ def _higuchi_fd(x, kmax):
             m_lm += lm[m]
         m_lm /= k
         lk[k - 1] = m_lm
-        x_reg[k - 1] = log(1. / k)
-        y_reg[k - 1] = log(m_lm)
+        x_reg[k - 1] = np.log(1. / k)
+        y_reg[k - 1] = np.log(m_lm)
     higuchi, _, _, _, _ = linregress(x_reg, y_reg)
     return higuchi
 
