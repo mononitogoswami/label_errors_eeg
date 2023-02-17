@@ -4,7 +4,6 @@
 
 import numpy as np
 from scipy.stats.mstats import winsorize
-from sklearn import linear_model
 from sklearn.mixture import GaussianMixture
 from scipy.signal import find_peaks
 from .utils import fit_robust_line, fill_nans_with_zeros, Config

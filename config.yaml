@@ -1,2 +1,29 @@
 data_path: 'datasets/output_all_wide_502.csv'
 expert_labels_path: 'datasets/eeg PUH mater eeg file _deidentified.xlsx'
+expert_description:
+  S1: 'High shaggy aEEG baseline (constantly at 4-200 mV)'
+  S2: 'Low aEEG baseline continually at low amplitude <= 2-3 mV.'
+  S3: 'aEEG baseline never falls to near-zero (< 1mV).'
+  S4: 'Abrupt, recurring and high amplitude (> 7.5 mV) spikes.'
+  S5: 'spiky aEEG with higher baseline but frequent and abrupt falls to near-zero'
+explain_decisions: True # Whether to explain labeling function decisions
+verbose: True # Controls verbosity
+label_values: # Label values 
+  abstain: 'Abstain'
+  burst_suppression: 'Burst Suppression'
+  supressed_with_ictal: 'Suppresed with Ictal'
+  supressed: 'Suppressed'
+  normal: 'Normal'
+labeling_function_parameters:
+  near_zero: 1
+  near_zero_duration_tol: 5 # Duration of time that aEEG is near zero
+  eeg_high_15: 15
+  eeg_high_10: 10
+  eeg_high_5: 5
+  eeg_high_4: 4
+  eeg_low_2: 2
+  length_eeg_low: 25
+  min_separation: 4
+  n_high_amplitude_peaks_per_hour: 12
+  min_fraction_high_amplitude: 0.1
+  splits: 6 # Number of non-overlappying moving windows (1 hour durations)
