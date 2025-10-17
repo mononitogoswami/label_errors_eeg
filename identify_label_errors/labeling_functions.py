@@ -1,7 +1,15 @@
 ####################################################
 #  Labeling functions to capture domain knowledge
 ####################################################
+"""
+Neurological domain knowledge-driven labeling functions for EEG analysis.
 
+This module implements expert knowledge as computational labeling functions
+that can automatically classify EEG signal patterns based on clinical criteria
+such as baseline amplitude, spike characteristics, and signal distribution patterns.
+"""
+
+from typing import List, Tuple, Optional, Union
 import numpy as np
 from scipy.stats.mstats import winsorize
 from sklearn.mixture import GaussianMixture
@@ -10,27 +18,86 @@ from .utils import fit_robust_line, fill_nans_with_zeros, Config
 
 
 class LabelingFunctions(object):
+    """
+    Domain knowledge-driven labeling functions for EEG signal classification.
+
+    This class implements 20+ specialized labeling functions that capture
+    neurological domain expertise for automated EEG pattern recognition.
+    Each function applies specific clinical criteria to classify signals into
+    categories: Normal, Suppressed, Suppressed with Ictal, Burst Suppression.
+
+    The approach uses:
+    - Baseline trend analysis via robust linear regression
+    - Peak detection with prominence thresholds
+    - Gaussian Mixture Models for bimodal pattern detection
+    - Signal amplitude distribution analysis
+    - Temporal pattern characterization
+
+    Attributes:
+        eeg (np.ndarray): Processed EEG signal data
+        baseline_exists (bool): Whether baseline trend analysis succeeded
+        slope (float): Slope of fitted baseline trend
+        average_eeg_baseline (float): Mean baseline amplitude
+        peaks (np.ndarray): Indices of detected signal peaks
+        prominences (np.ndarray): Peak prominence values above baseline
+        n_peaks_ha (int): Count of high amplitude peaks (>10mV)
+        n_peaks_la (int): Count of low amplitude peaks (5-10mV)
+        means (List[float]): Gaussian mixture component means
+        weights (List[float]): Gaussian mixture component weights
+
+    Example:
+        >>> eeg_signal = np.random.randn(1000) + 5  # Simulated EEG
+        >>> lf = LabelingFunctions(eeg_signal)
+        >>> vote_vector = lf.get_vote_vector()
+        >>> print(f"Labeling function outputs: {vote_vector}")
+    """
+
     def __init__(self,
-                 eeg:np.ndarray,
-                 config_file_path='config.yaml'):
+                 eeg: np.ndarray,
+                 config_file_path: str = 'config.yaml') -> None:
+        """
+        Initialize labeling functions with EEG data and configuration.
+
+        Args:
+            eeg: Raw EEG signal data as numpy array
+            config_file_path: Path to YAML configuration file containing
+                            labeling function parameters and thresholds
+
+        Raises:
+            FileNotFoundError: If config file is not found
+            ValueError: If EEG data is empty or invalid
+        """
+        # Input validation
+        if not isinstance(eeg, (np.ndarray, list)) or len(eeg) == 0:
+            raise ValueError("EEG data must be non-empty numpy array or list")
 
         # Assign inputs to self
         self.read_inputs_into_self(config_file_path)
-        
+
         # Read, process and mask aEEG data
         self.eeg, self.filled_nans = fill_nans_with_zeros(eeg)
         self.length_eeg = len(self.eeg)
+
+        if self.length_eeg < 100:  # Minimum signal length for reliable analysis
+            raise ValueError(f"EEG signal too short ({self.length_eeg} samples). Minimum 100 samples required.")
+
         self.process_eeg()
 
-        # Characterize the spikes in the aEEG data        
+        # Characterize the spikes in the aEEG data
         self.characterize_spikes_in_data()
 
         if self.verbose:
             self.print_statistics()
     
-    def process_eeg(self):
-        """Process EEG signal"""
-        self.filled_nans = np.logical_and(self.eeg<50, self.filled_nans)  # Set maximum aEEG value 50 mV
+    def process_eeg(self) -> None:
+        """
+        Process and clean EEG signal data.
+
+        Applies signal processing steps including amplitude clipping,
+        artifact removal via winsorization, and robust baseline fitting.
+        """
+        # Clip amplitudes above 50 mV (typical artifact threshold for aEEG)
+        self.filled_nans = np.logical_and(self.eeg < 50, self.filled_nans)
         
         if self.filled_nans is not None:
             self.eeg = self.eeg[~self.filled_nans]  # Keep only not NaN indices
@@ -76,7 +143,7 @@ class LabelingFunctions(object):
             self.n_peaks_vha, self.n_peaks_ha, self.n_peaks_la = 0
 
         self.many_high_amp_spikes = self.n_peaks_ha > self.lf_params['n_high_amplitude_peaks_per_hour']
-        self.many_low_amp_spikes = self.n_peaks_ls > self.lf_params['n_high_amplitude_peaks_per_hour']
+        self.many_low_amp_spikes = self.n_peaks_la > self.lf_params['n_high_amplitude_peaks_per_hour']
         self.low_baseline = self.average_eeg_baseline < self.lf_params['eeg_low_2']
         self.dur_low_amplitude_eeg = len(self.eeg[self.eeg < self.lf_params['near_zero']])
 

@@ -1,0 +1,22 @@
+# Core dependencies for EEG label error identification
+numpy>=1.21.0
+pandas>=1.3.0
+scipy>=1.7.0
+scikit-learn>=1.0.0
+
+# Configuration and data handling
+PyYAML>=6.0
+openpyxl>=3.0.9
+
+# Time zone handling
+pytz>=2021.1
+
+# Development and testing (optional)
+jupyter>=1.0.0
+matplotlib>=3.3.0
+seaborn>=0.11.0
+
+# Code quality tools (optional)
+black>=22.0.0
+flake8>=4.0.0
+pytest>=6.0.0
